@@ -59,23 +59,27 @@ export function createInterior(): WorldPart {
       }
     }
   };
-  slab(-5.4,2.1,-3.8,4,.45); slab(2.1,5.4,-.2,4,.45);slab(5.4,10.6,-2.8,4,.45);
-  planks(-5.16,1.86,-3.56,3.76,.45);planks(2.22,5.28,-.08,3.76,.45);planks(5.52,10.36,-2.56,3.76,.45);
+  const {stair,gallery}=INTERIOR, livingFront=INTERIOR.living.maxZ;
+  // 木板、顶棚和楼梯洞共同读取房间边界，扩容不会留下只有碰撞表面的空白带。
+  slab(-5.4,2.1,INTERIOR.living.minZ-.24,4,.45); slab(2.1,5.4,-.2,4,.45);slab(5.4,10.6,-2.8,4,.45);
+  planks(-5.16,1.86,INTERIOR.living.minZ,3.76,.45);planks(2.22,5.28,-.08,3.76,.45);planks(5.52,10.36,-2.56,3.76,.45);
   // 绝不整块封闭二楼：北侧楼梯与中庭仍然挑空。
-  slab(-5.16,-3.8,-3.56,3.76,4.15,m.floor,false);slab(-3.85,1.86,-.45,3.76,4.15);
+  slab(gallery.minX,gallery.maxX,gallery.minZ,gallery.maxZ,4.15,m.floor,false);slab(-3.85,1.86,-.45,3.76,4.15);
   // 楼梯顶端的板边碰撞后退一个玩家半径，避免脚未升到平台时胸部先撞竖边。
   // 可见楼板与可站立表面不缩小；其余栏廊板体仍保留完整厚度碰撞。
-  solid((-5.16-4.09)/2,(-3.56-2.15)/2,1.07,1.41,3.97,4.15);
-  solid((-5.16-3.8)/2,(-2.15+3.76)/2,1.36,5.91,3.97,4.15);
-  planks(-5.16,-3.8,-3.56,3.76,4.15);planks(-3.85,1.86,-.45,3.76,4.15);
-  const ceiling=(x0:number,x1:number,z0:number,z1:number,bottom:number)=>{
-    cube(floors,x1-x0,.18,z1-z0,(x0+x1)/2,bottom+.09,(z0+z1)/2,m.cream);
+  solid((gallery.minX-4.09)/2,(gallery.minZ+stair.maxZ)/2,1.07,stair.maxZ-gallery.minZ,3.97,4.15);
+  solid((gallery.minX+gallery.maxX)/2,(stair.maxZ+gallery.maxZ)/2,gallery.maxX-gallery.minX,gallery.maxZ-stair.maxZ,3.97,4.15);
+  planks(gallery.minX,gallery.maxX,gallery.minZ,gallery.maxZ,4.15);planks(-3.85,1.86,-.45,3.76,4.15);
+  const ceiling=(x0:number,x1:number,z0:number,z1:number,bottom:number,visualThickness=.18)=>{
+    cube(floors,x1-x0,visualThickness,z1-z0,(x0+x1)/2,bottom+visualThickness/2,(z0+z1)/2,m.cream);
     solid((x0+x1)/2,(z0+z1)/2,x1-x0,z1-z0,bottom,bottom+.18);
   };
-  ceiling(-5.16,1.86,-3.56,3.76,8.04);ceiling(2.22,5.28,-.08,3.76,3.97);ceiling(5.52,10.36,-2.56,3.76,3.35);
+  // 原塔楼天花的上表面退入楼板两厘米，避免与 Aldous 木地板出现不同材质的重面。
+  // 下表面和完整楼板碰撞高度不变，一楼净高与二楼支撑保持稳定。
+  ceiling(-5.16,1.86,INTERIOR.living.minZ,3.76,8.04);ceiling(2.22,5.28,-.08,3.76,3.97,.16);ceiling(5.52,10.36,-2.56,3.76,3.35);
 
-  wall(kitchen,colliders,{axis:'z',fixed:-1.5,from:.55,to:3.76,bottom:.45,top:3.97,thickness:.16,openings:[doorOpening('kitchen')]},m.grey);
-  wall(living,colliders,{axis:'x',fixed:.55,from:-5.16,to:1.86,bottom:.45,top:3.97,thickness:.16,openings:[doorOpening('living')]},m.green);
+  wall(kitchen,colliders,{axis:'z',fixed:-1.5,from:INTERIOR.kitchen.minZ,to:3.76,bottom:.45,top:3.97,thickness:.16,openings:[doorOpening('kitchen')]},m.grey);
+  wall(living,colliders,{axis:'x',fixed:livingFront,from:-5.16,to:1.86,bottom:.45,top:3.97,thickness:.16,openings:[doorOpening('living')]},m.green);
   wall(upper,colliders,{axis:'z',fixed:-3.7,from:-.45,to:3.76,bottom:4.15,top:8.04,thickness:.16,openings:[doorOpening('bedroom')]},m.green);
   wall(upper,colliders,{axis:'x',fixed:-.45,from:-3.7,to:1.86,bottom:4.15,top:8.04,thickness:.16},m.green);
   const frame=(p:THREE.Group,x:number,z:number,y:number,width:number,height:number,rotation=0)=>{
@@ -84,12 +88,12 @@ export function createInterior(): WorldPart {
     cube(g,width+.22,.15,.22,0,height+.04,0,m.cream);
     cube(g,width+.29,.055,.26,0,height+.14,0,m.wood);
   };
-  frame(foyer,-.05,.55,.45,doorOpening('living').width,2.65);
+  frame(foyer,-.05,livingFront,.45,doorOpening('living').width,2.65);
   frame(foyer,-1.5,2,.45,doorOpening('kitchen').width,2.65,Math.PI/2);
   frame(upper,-3.7,1.55,4.15,doorOpening('bedroom').width,2.65,Math.PI/2);
   // 内墙踢脚、腰线避开门洞，外立面窗的位置完全交由外壳模块维护。
-  for(const [x,w] of [[-3,4.14],[1.32,1.08]])for(const y of [.57,1.35])cube(living,w,.1,.045,x,y,.447,m.wood);
-  for(const [z,d]of [[.915,.73],[3.215,1.09]])for(const y of [.57,1.35])cube(foyer,.04,.1,d,-1.397,y,z,m.wood);
+  for(const [x,w] of [[-3,4.14],[1.32,1.08]])for(const y of [.57,1.35])cube(living,w,.1,.045,x,y,livingFront-.103,m.wood);
+  for(const [z,d]of [[(INTERIOR.foyer.minZ+1.28)/2,1.28-INTERIOR.foyer.minZ],[3.215,1.09]])for(const y of [.57,1.35])cube(foyer,.04,.1,d,-1.397,y,z,m.wood);
   for(const y of [4.27,5.12,7.89])cube(upper,5.48,.1,.045,-.88,y,-.347,m.wood);
   for(const [z,d]of [[.19,1.28],[3.015,1.49]])for(const y of [4.27,5.12,7.89])cube(upper,.045,.1,d,-3.599,y,z,m.wood);
 
@@ -143,7 +147,7 @@ export function createInterior(): WorldPart {
 
   // 门厅：圆桌保持在正门路线右侧；门扇旋转范围内不摆物件。
   const foyerTable=roundTable(foyer,1.1,.45,2.6,.37);vase(foyerTable,0,.81,0);
-  picture(foyer,-1.397,2.24,.99,.48,.68,Math.PI/2);
+  picture(foyer,-1.397,2.24,INTERIOR.foyer.minZ+.44,.48,.68,Math.PI/2);
   chandelier(foyer,.45,2.15,3.96,3.08,.33);
   cube(foyer,1.18,.012,1.75,.05,.468,2.18,m.red);
   cube(foyer,.96,.014,1.52,.05,.47,2.18,m.green);
@@ -161,49 +165,50 @@ export function createInterior(): WorldPart {
   cylinder(stove,.095,2.26,-.19,1.96,-.14,m.iron);
   cylinder(stove,.14,.18,.2,.94,0,m.grey,.12);
   footprint(-4.61,1.12,.8,.7,.45,3.12);
-  cabinet(kitchen,-3.22,.45,.92,1.3,.84,.43);
-  for(const y of [2.41,2.96]){cube(kitchen,1.5,.07,.29,-3.2,y,.8,m.wood);for(const x of [-3.73,-2.67])cube(kitchen,.05,.21,.24,x,y-.12,.775,m.dark);}
-  for(let i=0;i<4;i++)cylinder(kitchen,.075,.17,-3.69+i*.28,2.535,.8,i%2?m.cream:m.grey,.065);
+  cabinet(kitchen,-3.22,.45,livingFront+.37,1.3,.84,.43);
+  for(const y of [2.41,2.96]){cube(kitchen,1.5,.07,.29,-3.2,y,livingFront+.25,m.wood);for(const x of [-3.73,-2.67])cube(kitchen,.05,.21,.24,x,y-.12,livingFront+.225,m.dark);}
+  for(let i=0;i<4;i++)cylinder(kitchen,.075,.17,-3.69+i*.28,2.535,livingFront+.25,i%2?m.cream:m.grey,.065);
   picture(kitchen,-1.607,2.35,3.23,.49,.65,-Math.PI/2);
   chandelier(kitchen,-3.35,2.35,3.96,3.19,.29);
 
-  // 主客厅：挑空厅粉色扶手椅与壁炉客厅元素的压缩空间重建。
-  cube(living,3,.015,1.42,-2.65,.47,-.79,m.red);cube(living,2.74,.017,1.16,-2.65,.471,-.79,m.cream);cube(living,2.53,.019,.96,-2.65,.472,-.79,m.green);
-  chair(living,-2.6,.45,-.58,-.27,m.pink,true);
-  const side=roundTable(living,-3.65,.45,-.53,.3);vase(side,0,.81,0);
-  const fireplace=object(living,-4.95,.45,-.91,Math.PI/2);
+  // 主客厅随南侧隔墙向后退让家具，新增北侧空间留作楼梯前通道。
+  cube(living,3,.015,1.42,-2.65,.47,livingFront-1.34,m.red);cube(living,2.74,.017,1.16,-2.65,.471,livingFront-1.34,m.cream);cube(living,2.53,.019,.96,-2.65,.472,livingFront-1.34,m.green);
+  chair(living,-2.6,.45,livingFront-1.13,-.27,m.pink,true);
+  const side=roundTable(living,-3.65,.45,livingFront-1.08,.3);vase(side,0,.81,0);
+  const fireplace=object(living,-4.95,.45,livingFront-1.46,Math.PI/2);
   cube(fireplace,1.57,.11,.5,0,.055,.1,m.cream);cube(fireplace,1.28,1.16,.25,0,.69,-.075,m.cream);
   cube(fireplace,.77,.83,.04,0,.52,.073,m.black);
   for(const sx of [-1,1]){cube(fireplace,.22,1.03,.31,sx*.58,.57,.03,m.cream);cube(fireplace,.28,.12,.37,sx*.58,1.04,.07,m.cream);}
   cube(fireplace,1.57,.14,.48,0,1.21,.055,m.cream);cube(fireplace,1.7,.065,.53,0,1.31,.055,m.cream);
   for(const sx of [-1,1]){const log=cylinder(fireplace,.07,.44,sx*.12,.2,.16,m.wood);log.rotation.z=Math.PI/2;}
-  footprint(-4.95,-.91,1.7,.59,.45,1.38,Math.PI/2);
-  cabinet(living,-4.7,.45,-1.99,.66,1.94,.5,Math.PI/2);
-  picture(living,-3.28,2.44,.447,.93,1.02,Math.PI);
-  chandelier(living,-1.55,-1.13,8.03,5.93,.54);
+  footprint(-4.95,livingFront-1.46,1.7,.59,.45,1.38,Math.PI/2);
+  cabinet(living,-4.7,.45,livingFront-2.54,.66,1.94,.5,Math.PI/2);
+  picture(living,-3.28,2.44,livingFront-.103,.93,1.02,Math.PI);
+  chandelier(living,-1.55,livingFront-1.68,8.03,5.93,.54);
 
   // 北侧20级实心木楼梯；动态脚底使用外部坡道，几何保留真实踏步。
-  const {stair}=INTERIOR,run=(stair.maxX-stair.minX)/stair.steps,rise=(INTERIOR.upper-INTERIOR.ground)/stair.steps;
+  const run=(stair.maxX-stair.minX)/stair.steps,rise=(INTERIOR.upper-INTERIOR.ground)/stair.steps;
+  const stairZ=(stair.minZ+stair.maxZ)/2,stairWidth=stair.maxZ-stair.minZ,northRail=stair.minZ+.03,southRail=stair.maxZ-.03;
   for(let i=0;i<stair.steps;i++){
     const eastX=stair.maxX-i*run,westX=eastX-run,x=(eastX+westX)/2,top=.45+(i+1)*rise;
-    cube(stairs,run,top-.45,1.35,x,(top+.45)/2,-2.825,m.wood);
-    cube(stairs,run+.017,.045,1.37,x,top-.0225,-2.825,i%2?m.floor:m.honey);
+    cube(stairs,run,top-.45,stairWidth,x,(top+.45)/2,stairZ,m.wood);
+    cube(stairs,run+.017,.045,stairWidth+.02,x,top-.0225,stairZ,i%2?m.floor:m.honey);
     // 玩家圆柱半径会提前接触相邻高一级柱体，按坡度留足脚底净空。
     const underTop=.45+i*rise-.28*rise/run-.085;
-    if(underTop>.45)solid(x,-2.825,run,1.35,.45,underTop);
+    if(underTop>.45)solid(x,stairZ,run,stairWidth,.45,underTop);
     const railX=Math.min(x,1.33),base=.45+(1.55-railX)/5.35*3.7;
     if(i===0)continue;
-    for(const z of [-3.47,-2.18]){
+    for(const z of [northRail,southRail]){
       // 南侧低端缩短一级，让靠东墙的玩家可从主厅转入楼梯。
-      if(z===-2.18 && i===1)continue;
+      if(z===southRail && i===1)continue;
       cube(stairs,.045,.92,.045,railX,base+.48,z,m.dark);
       cylinder(stairs,.038,.1,railX,base+.48,z,m.honey,.038,8);
       // 每段高度随楼梯上升，楼下仍可进入足够高的梯底空间。
       solid(x,z,run+.012,.075,.45+i*rise-.02,top+1.02);
     }
   }
-  for(const z of [-3.47,-2.18]){
-    const start=z===-2.18?1.015:1.3,startY=.45+(1.55-start)/5.35*3.7+.97;
+  for(const z of [northRail,southRail]){
+    const start=z===southRail?1.015:1.3,startY=.45+(1.55-start)/5.35*3.7+.97;
     beam(stairs,new THREE.Vector3(start,startY,z),new THREE.Vector3(-3.78,5.13,z),.08,m.wood);
     for(const x of [start,-3.78]){const y=.45+(1.55-x)/5.35*3.7;cube(stairs,.1,1.06,.1,x,y+.51,z,m.dark);sphere(stairs,.073,x,y+1.08,z,m.honey);}
   }
@@ -215,8 +220,8 @@ export function createInterior(): WorldPart {
     for(let j=0;j<=n;j++)cube(stairs,j===0||j===n?.085:.04,.94,j===0||j===n?.085:.04,x,y+.56,z0+(z1-z0)*j/n,m.wood);
     solid(x,(z0+z1)/2,.09,z1-z0,y,y+1.1);
   };
-  railing(-3.83,-2.11,-.5,4.15);
-  cube(stairs,1.36,.12,.11,-4.48,4.11,-2.125,m.wood);
+  railing(-3.83,stair.maxZ+.04,-.5,4.15);
+  cube(stairs,1.36,.12,.11,-4.48,4.11,stair.maxZ+.025,m.wood);
 
   // 右侧附屋餐厅：长白桌布、木椅和竖琴；从西门进入可沿桌边绕行。
   const diningTable=table(dining,8.42,.45,.42,1.25,2.65,0,true);

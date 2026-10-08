@@ -2,7 +2,7 @@ import { HemisphereLight, PointLight, type Scene } from 'three';
 
 /** 室内补光不投实时阴影；唯一阴影光源仍是原有太阳。 */
 export function createInteriorLighting(scene: Scene) {
-  const positions = [[.2,3.55,2.1],[-.5,5,-1.3],[7.9,3,0.3],[-.4,7.2,1.5]];
+  const positions = [[.2,3.55,2.1],[-.5,5,-1.9],[7.9,3,0.3],[-.4,7.2,1.5],[3.75,6.6,-3.5],[3.7,7.2,1.35]];
   for(const [x,y,z] of positions){
     const light=new PointLight(0xffdab1,5,7,2);light.position.set(x,y,z);scene.add(light);
   }

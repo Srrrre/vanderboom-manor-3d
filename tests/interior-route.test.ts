@@ -3,6 +3,7 @@ import test from 'node:test';
 import { PerspectiveCamera } from 'three';
 import { createManor } from '../src/world/manor.ts';
 import { createInterior } from '../src/world/interior.ts';
+import { createAldousWing } from '../src/world/aldous.ts';
 import { createDoors } from '../src/interactions/doors.ts';
 import { DOORS, INTERIOR_SURFACES } from '../src/world/interior-layout.ts';
 import { walkableHeight } from '../src/world/terrain.ts';
@@ -16,10 +17,11 @@ const close = (actual: number, expected: number, message: string, tolerance = .0
 function routeFixture() {
   const manor = createManor();
   const interior = createInterior();
+  const aldous = createAldousWing();
   const doors = createDoors(DOORS);
-  const occluders = [manor.group, interior.group];
+  const occluders = [manor.group, interior.group, aldous.group];
   const world: MotionWorld = {
-    colliders: [...manor.colliders, ...interior.colliders, ...doors.colliders],
+    colliders: [...manor.colliders, ...interior.colliders, ...aldous.colliders, ...doors.colliders],
     surfaces: INTERIOR_SURFACES, groundHeight: walkableHeight,
   };
   const camera = new PerspectiveCamera(60, 1, .01, 100);
@@ -107,20 +109,30 @@ test('真实楼梯与门支持前院到二层卧室往返，每帧脚底持续�
   route.enter();
   route.openDoor('living', { x: -.05, y: .45, z: -.9 });
   const stairFeet = (x: number) => x > 1.55 ? .45 : x < -3.8 ? 4.15 : .45 + (1.55 - x) * 3.7 / 5.35;
-  const entranceFeet = (x: number, z: number) => z > -2.15 ? .45 : stairFeet(x);
+  const entranceFeet = (x: number, z: number) => z > -3.35 ? .45 : stairFeet(x);
   route.walkTo('进入楼梯前客厅', { x: -.05, y: .45, z: -.9 });
   route.walkTo('绕到楼梯东侧', { x: 1.25, y: .45, z: -.9 });
-  route.walkTo('到达楼梯最低端', { x: 1.48, y: .498411, z: -2.82 }, entranceFeet);
-  route.walkTo('向西连续登上二楼', { x: -4.48, y: 4.15, z: -2.82 }, stairFeet);
+  route.walkTo('到达楼梯最低端', { x: 1.48, y: .498411, z: -4.02 }, entranceFeet);
+  route.walkTo('向西连续登上二楼', { x: -4.48, y: 4.15, z: -4.02 }, stairFeet);
   route.walkTo('沿西侧栏廊到卧室门', { x: -4.48, y: 4.15, z: 1.55 });
   route.openDoor('bedroom', { x: -2.7, y: 4.15, z: 1.55 });
   route.walkTo('进入二楼卧室', { x: -2.7, y: 4.15, z: 1.55 });
   route.walkTo('卧室内部走到地毯', { x: -1.8, y: 4.15, z: 1.55 });
   route.walkTo('卧室返回西侧栏廊', { x: -4.48, y: 4.15, z: 1.55 });
-  route.walkTo('栏廊返回楼梯顶', { x: -4.48, y: 4.15, z: -2.82 });
-  route.walkTo('向东连续下楼', { x: 1.48, y: .498411, z: -2.82 }, stairFeet);
+  route.walkTo('栏廊返回楼梯顶', { x: -4.48, y: 4.15, z: -4.02 });
+  route.walkTo('向东连续下楼', { x: 1.48, y: .498411, z: -4.02 }, stairFeet);
   route.walkTo('绕回楼梯前客厅', { x: 1.25, y: .45, z: -.9 }, entranceFeet);
   route.walkTo('回到客厅门中线', { x: -.05, y: .45, z: -.9 });
   route.walkTo('客厅返回门厅', { x: -.05, y: .45, z: 2 });
+  route.leave();
+});
+
+test('门厅扩容后的原隔墙位置可以真实走过，并能安全返回前院', () => {
+  const route = routeFixture();
+  route.enter();
+  route.walkTo('走向门厅新增加的空间', { x: 1.2, y: .45, z: 1.1 });
+  // 原墙会阻挡到 z≈.91；新墙仍保留身体净空，z=.4 已跨过原墙实体。
+  route.walkTo('跨过原 z=.55 隔墙而不被阻挡', { x: 1.2, y: .45, z: .4 });
+  route.walkTo('扩容区返回入口中线', { x: -.05, y: .45, z: 1.1 });
   route.leave();
 });

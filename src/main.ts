@@ -1,4 +1,5 @@
 import './style.css';
+import { createAldousWing } from './world/aldous';
 import { createInterior } from './world/interior';
 import { createDoors } from './interactions/doors';
 import { DOORS, INTERIOR_SURFACES, interiorRoom } from './world/interior-layout';
@@ -26,8 +27,9 @@ try {
   const manor = createManor(); scene.add(manor.group);
   const environment = createEnvironment(); scene.add(environment.group);
   const interior = createInterior(); scene.add(interior.group);
+  const aldous = createAldousWing(); scene.add(aldous.group);
   const doors = createDoors(DOORS); scene.add(doors.group);
-  const world: MotionWorld = { colliders: [...manor.colliders, ...environment.colliders, ...interior.colliders, ...doors.colliders], surfaces: INTERIOR_SURFACES, groundHeight: walkableHeight };
+  const world: MotionWorld = { colliders: [...manor.colliders, ...environment.colliders, ...interior.colliders, ...aldous.colliders, ...doors.colliders], surfaces: INTERIOR_SURFACES, groundHeight: walkableHeight };
   const lighting = createInteriorLighting(scene);
   const interaction = el('interaction');
   let entered = false, lightQuality = false, resetOnEntry = true;

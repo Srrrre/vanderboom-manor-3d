@@ -48,11 +48,11 @@ export function createManor(): WorldPart {
   }
   const frontHoles=[doorOpening('front',.05),wh(-3.4,2.13,1.2,1.83),...[-3.25,-.35].map(x=>wh(x,6.6,.95,2.05))];
   shellWall(main,{axis:'x',fixed:3.88,from:-5.4,to:2.1,bottom:0,top:8.2,thickness:.24,openings:frontHoles},1);
-  shellWall(main,{axis:'x',fixed:-3.68,from:-5.4,to:2.1,bottom:0,top:8.2,thickness:.24,openings:[2.15,6.6].flatMap(y=>[-3.6,-.8].map(x=>wh(x,y,1.02,1.85)))},-1);
-  shellWall(main,{axis:'z',fixed:-5.28,from:-3.8,to:4,bottom:0,top:8.2,thickness:.24,openings:[2.15,6.6].flatMap(y=>[-1.8,1.4].map(z=>wh(z,y,1.02,1.85)))},-1);
-  shellWall(main,{axis:'z',fixed:1.98,from:-3.8,to:4,bottom:0,top:8.2,thickness:.24,openings:[{center:1.7,width:1.7,bottom:.45,top:3.25}]},1);
+  shellWall(main,{axis:'x',fixed:-4.88,from:-5.4,to:2.1,bottom:0,top:8.2,thickness:.24,openings:[2.15,6.6].flatMap(y=>[-3.6,-.8].map(x=>wh(x,y,1.02,1.85)))},-1);
+  shellWall(main,{axis:'z',fixed:-5.28,from:-5,to:4,bottom:0,top:8.2,thickness:.24,openings:[2.15,6.6].flatMap(y=>[-1.8,1.4].map(z=>wh(z,y,1.02,1.85)))},-1);
+  shellWall(main,{axis:'z',fixed:1.98,from:-5,to:4,bottom:0,top:8.2,thickness:.24,openings:[{center:1.7,width:1.7,bottom:.45,top:3.25},doorOpening('aldous-corridor')]},1);
   shellWall(tower,{axis:'x',fixed:3.88,from:2.1,to:5.4,bottom:0,top:11.6,thickness:.24,openings:[wh(3.25,2.13,1.2,1.83),wh(3.7,6.6,.95,2.05)]},1);
-  shellWall(tower,{axis:'x',fixed:-.08,from:2.1,to:5.4,bottom:0,top:11.6,thickness:.24},-1);
+  shellWall(tower,{axis:'x',fixed:-.08,from:2.1,to:5.4,bottom:0,top:11.6,thickness:.24,openings:[{center:3.75,width:3.3,bottom:3.99,top:8.04}]},-1);
   shellWall(tower,{axis:'z',fixed:2.22,from:-.2,to:4,bottom:8.2,top:11.6,thickness:.24},-1);
   shellWall(tower,{axis:'z',fixed:5.28,from:-.2,to:4,bottom:3.5,top:11.6,thickness:.24,openings:[6.6,9.6].map(y=>wh(1.8,y,.85,1.65))},1);
   shellWall(annex,{axis:'x',fixed:3.88,from:5.4,to:10.6,bottom:0,top:3.5,thickness:.24,openings:[6.7,9.2].map(x=>wh(x,1.95,.88,1.43))},1,m.wood);
@@ -87,7 +87,7 @@ export function createManor(): WorldPart {
   box(tower,4.25,.15,5.15,t.x,t.height-.02,t.z,m.trim);box(tower,2.5,.16,3.35,t.x,15.19,t.z,m.roofEdge);
   box(tower,1.25,1.8,1.05,t.x,13.45,3.67,m.roof);win(tower,t.x,13.5,4.23,.91,1.6,2,2,0,true);
   const arch=new THREE.Mesh(new THREE.TorusGeometry(.56,.065,5,16,Math.PI),m.trim);arch.position.set(t.x,14.31,4.27);tower.add(arch);
-  roof(annex,n.x,n.height,n.z,[{y:0,w:n.width+.6,d:n.depth+.6},{y:n.roofRise,w:n.width+.15,d:.05}],m.annexRoof);
+  roof(annex,n.x+.15,n.height,n.z,[{y:0,w:n.width+.3,d:n.depth+.6},{y:n.roofRise,w:n.width+.15,d:.05}],m.annexRoof);
   box(porch,p.width,p.floor,p.depth,p.x,p.floor/2,p.z,m.stone);box(porch,p.width,.07,p.depth,p.x,p.floor-.035,p.z,m.trim);
   for(let i=0;i<3;i++)box(porch,4,(3-i)*.15,.4,0,(3-i)*.075,6.7+i*.4,m.stone);
   for(const x of p.columns){
@@ -105,7 +105,7 @@ export function createManor(): WorldPart {
   for(const x of [-.76,.66])box(porch,.1,2.79,.31,x,1.775,3.99,m.trim);
   box(porch,1.52,.14,.31,-.05,3.16,3.99,m.trim);
   for(const y of [2.15,6.6])for(const z of [-1.8,1.4])win(main,-5.42,y,z,1.02,1.85,2,3,-Math.PI/2);
-  for(const y of [2.15,6.6])for(const x of [-3.6,-.8])win(main,x,y,-3.82,1.02,1.85,2,3,Math.PI);
+  for(const y of [2.15,6.6])for(const x of [-3.6,-.8])win(main,x,y,-5.02,1.02,1.85,2,3,Math.PI);
   for(const z of [-1.3,1.9])win(annex,10.62,1.95,z,.88,1.43,2,3,Math.PI/2);
   for(const y of [6.6,9.6])win(tower,5.42,y,1.8,.85,1.65,2,3,Math.PI/2);
   for(const p of [main,tower,annex,porch])batchStatic(p);

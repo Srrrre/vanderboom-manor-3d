@@ -20,8 +20,8 @@ test('主要路线贯通门厅、主厅、楼梯、二层栏廊及卧室', () =>
   const world = scene();
   let player = {x: -.05, y: .45, z: 3.55};
   const route = [
-    {x: -.05, z: -.9, y: .45}, {x: 1.25, z: -.9, y: .45},
-    {x: 1.48, z: -2.82, y: .4984}, {x: -4.45, z: -2.82, y: 4.15},
+    {x: -.05, z: -1.5, y: .45}, {x: 1.25, z: -1.5, y: .45},
+    {x: 1.48, z: -4.02, y: .4984}, {x: -4.45, z: -4.02, y: 4.15},
     {x: -4.45, z: 1.55, y: 4.15}, {x: -2.7, z: 1.55, y: 4.15},
   ];
   for (const stop of route) {
@@ -36,9 +36,9 @@ test('主要路线贯通门厅、主厅、楼梯、二层栏廊及卧室', () =>
 
 test('楼梯下端与东侧外墙之间保留可走入的身体净空', () => {
   const world = scene();
-  world.colliders.push({type:'box',minX:1.86,maxX:2.1,minZ:-3.8,maxZ:.55,minY:.45,maxY:8.2});
-  const entry=moveOnSurfaces({x:1.48,y:.45,z:-1.45},{x:0,z:-1.37},world);
-  close(entry.z,-2.82);
+  world.colliders.push({type:'box',minX:1.86,maxX:2.1,minZ:-5,maxZ:-.05,minY:.45,maxY:8.2});
+  const entry=moveOnSurfaces({x:1.48,y:.45,z:-2.65},{x:0,z:-1.37},world);
+  close(entry.z,-4.02);
   const top=moveOnSurfaces(entry,{x:-5.93,z:0},world);
   close(top.x,-4.45);close(top.y,4.15);
 });
@@ -47,8 +47,8 @@ test('楼梯及西侧挑空栏杆可以阻挡斜向穿出楼板', () => {
   const world = scene();
   const upstairs = moveOnSurfaces({x: -4.5, y: 4.15, z: -1.2}, {x: 2, z: 0}, world);
   assert.ok(upstairs.x < -4.0, `栏廊边缘不能跨出：${upstairs.x}`);
-  const diagonal = moveOnSurfaces({x: .8, y: .9687, z: -2.82}, {x: -2, z: 1.8}, world);
-  assert.ok(diagonal.z < -2.35, `楼梯扶手不能穿过：${diagonal.z}`);
+  const diagonal = moveOnSurfaces({x: .8, y: .9687, z: -4.02}, {x: -2, z: 1.8}, world);
+  assert.ok(diagonal.z < -3.55, `楼梯扶手不能穿过：${diagonal.z}`);
 });
 
 test('二层楼板仅覆盖栏廊与卧室，楼梯上方保持挑空', () => {
@@ -56,8 +56,17 @@ test('二层楼板仅覆盖栏廊与卧室，楼梯上方保持挑空', () => {
   const rayDown = (x: number,z: number) => new Raycaster(new Vector3(x, 6.5, z),new Vector3(0,-1,0)).intersectObject(group,true)[0];
   const bedroom = rayDown(0, 2.8);
   assert.ok(bedroom && bedroom.point.y >= 4.15, '卧室必须有实体楼板');
-  const stair = rayDown(-1.3,-2.82);
+  const stair = rayDown(-1.3,-4.02);
   assert.ok(stair && stair.point.y > 1.5 && stair.point.y < 3.1, '楼梯顶面可见，不能被完整二层楼板封住');
+});
+
+test('扩容后的门厅横向净空与新增后部木地板真实存在', () => {
+  const world = scene();
+  const foyer = moveOnSurfaces({x: -.8, y: .45, z: .5}, {x: 1.8, z: 0}, world);
+  close(foyer.x, 1); close(foyer.z, .5);
+  world.group.updateMatrixWorld(true);
+  const rearFloor = new Raycaster(new Vector3(.75, .9, -4.85), new Vector3(0,-1,0)).intersectObject(world.group,true)[0];
+  assert.ok(rearFloor && Math.abs(rearFloor.point.y-.45)<.03, '后移主屋边界内必须有真实地板，不能只延长数学表面');
 });
 
 test('室内碰撞体均有合法高度，楼下不会被二楼家具阻挡', () => {
