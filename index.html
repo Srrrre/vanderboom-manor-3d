@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#25363a" />
+    <meta name="description" content="Walk the quiet grounds of Vanderboom Manor. An unofficial Rusty Lake fan-made 3D exploration." />
+    <title>Vanderboom Manor · 雾中的庄园</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+  </head>
+  <body>
+    <canvas id="scene" aria-label="可自由探索的三维庄园场景"></canvas>
+    <div class="vignette" aria-hidden="true"></div>
+    <header class="masthead">
+      <a class="wordmark" href="./" aria-label="Vanderboom Manor 首页"><span class="sigil">V</span><span>RUSTY LAKE<span class="wordmark-sub">AN UNOFFICIAL EXPLORATION</span></span></a>
+      <div class="chapter"><span class="status-dot"></span> CHAPTER 01 <span class="chapter-label">建筑与原野</span></div>
+    </header>
+    <main id="welcome" class="welcome">
+      <div class="intro-rule"><span>THE ESTATE</span><i></i><span>01 / 03</span></div>
+      <p class="eyebrow">湖畔无声，往事未眠。</p>
+      <h1>Vanderboom<br/><em>Manor</em><span>范德布姆庄园</span></h1>
+      <p class="description">沿着小径，走近那座熟悉的房子。<br/>在薄雾、群山与湖水之间，<br/>重新发现庄园的轮廓。</p>
+      <button id="start" class="start-button" disabled><span id="start-label">正在构建庄园</span><span aria-hidden="true">↗</span></button>
+      <div class="intro-controls"><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 漫游</span><span><span class="mouse-icon"></span> 转动视角</span></div>
+      <p class="quiet-note">Shift 加速 · Esc 暂停 · 建议使用键盘与鼠标</p>
+      <div class="project-note"><span>PHASE I — ARCHITECTURAL STUDY</span><p>依据游戏截图重建的建筑白模<br/>通往印象派世界的第一步</p></div>
+    </main>
+    <aside id="hud" class="hud" hidden>
+      <div class="place-label"><span>VANDERBOOM ESTATE</span><strong id="location">庄园前庭</strong><small id="coordinates">18 E · 32 S</small></div>
+      <nav class="toolbar" aria-label="探索工具">
+        <button id="reset" title="回到前庭">↺ <span>回到前庭</span></button>
+        <button id="quality" title="切换渲染质量">◈ <span>标准画质</span></button>
+        <button id="help" title="暂停并查看操作说明">? <span>操作说明</span></button>
+      </nav>
+      <div class="crosshair" aria-hidden="true"></div>
+      <div class="map-card"><span>庄园导览 <i>N ↑</i></span><canvas id="map" width="180" height="140" aria-label="玩家位置小地图"></canvas><small>湖岸 · 庄园 · 林地</small></div>
+      <div class="walking-hint"><span><kbd>WASD</kbd> 移动</span><span><kbd>SHIFT</kbd> 加速</span><span><kbd>ESC</kbd> 暂停</span></div>
+    </aside>
+    <section id="pause" class="pause" hidden aria-labelledby="pause-title">
+      <div class="pause-card"><span class="eyebrow">A MOMENT OF STILLNESS</span><h2 id="pause-title">庄园在等你</h2><p>鼠标观察，WASD 行走，Shift 加速。<br/>Esc 释放鼠标后可使用右上角工具。</p><button id="resume" class="start-button">继续探索 <span>↗</span></button><button id="restart" class="text-button">重新从前庭开始</button></div>
+    </section>
+    <div id="notice" role="status" aria-live="polite" hidden></div>
+    <footer><span>UNOFFICIAL FAN PROJECT <i>·</i> NOT AFFILIATED WITH RUSTY LAKE</span><span id="scene-state">场景准备中 <span class="tiny-spinner"></span></span></footer>
+    <noscript>此三维场景需要启用 JavaScript，并使用支持 WebGL 2 的浏览器。</noscript>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
