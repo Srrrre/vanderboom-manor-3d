@@ -19,11 +19,24 @@ export function movementDelta(
   };
 }
 
-function overlaps(position: Point, collider: Collider, radius: number): boolean {
+/** 角色圆形投影与任意碰撞体的重叠检测；门动画也可复用此判断。 */
+export function overlapsCollider(position: Point, collider: Collider, radius: number): boolean {
   if (collider.type === 'circle') {
     const x = position.x - collider.x;
     const z = position.z - collider.z;
     return x * x + z * z < (radius + collider.radius) ** 2 - 1e-12;
+  }
+  if (collider.type === 'obb') {
+    // Three.js 绕 Y 轴正向旋转时，局部 +X 指向世界 -Z；这里使用逆旋转。
+    const dx = position.x - collider.x;
+    const dz = position.z - collider.z;
+    const cosine = Math.cos(collider.rotation);
+    const sine = Math.sin(collider.rotation);
+    const localX = cosine * dx - sine * dz;
+    const localZ = sine * dx + cosine * dz;
+    const nearestX = clamp(localX, -collider.halfX, collider.halfX);
+    const nearestZ = clamp(localZ, -collider.halfZ, collider.halfZ);
+    return (localX - nearestX) ** 2 + (localZ - nearestZ) ** 2 < radius ** 2 - 1e-12;
   }
   const nearestX = clamp(position.x, collider.minX, collider.maxX);
   const nearestZ = clamp(position.z, collider.minZ, collider.maxZ);
@@ -48,7 +61,7 @@ export function moveWithCollisions(
     const start = result[axis];
     const end = clamp(start + step[axis], -limit, limit);
     const candidate = { ...result, [axis]: end };
-    if (!colliders.some((collider) => overlaps(candidate, collider, radius))) {
+    if (!colliders.some((collider) => overlapsCollider(candidate, collider, radius))) {
       result[axis] = end;
       return;
     }
@@ -58,7 +71,7 @@ export function moveWithCollisions(
     for (let iteration = 0; iteration < 12; iteration++) {
       const fraction = (low + high) / 2;
       candidate[axis] = start + (end - start) * fraction;
-      if (colliders.some((collider) => overlaps(candidate, collider, radius))) high = fraction;
+      if (colliders.some((collider) => overlapsCollider(candidate, collider, radius))) high = fraction;
       else low = fraction;
     }
     result[axis] = start + (end - start) * low;

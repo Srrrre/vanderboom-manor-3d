@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { movementDelta, moveWithCollisions } from '../src/controls/movement.ts';
-import type { Collider } from '../src/world/types.ts';
+import * as movement from '../src/controls/movement.ts';
+import type { Collider, MotionWorld } from '../src/world/types.ts';
 import { PerspectiveCamera, Vector3 } from 'three';
 import { FirstPersonController } from '../src/controls/FirstPersonController.ts';
 
@@ -112,7 +113,7 @@ class BrowserDocument extends EventTarget {
   }
 }
 
-function browserFixture(groundHeight = (_x: number, _z: number) => 0) {
+function browserFixture(groundHeight = (_x: number, _z: number) => 0, world?: MotionWorld) {
   const document = new BrowserDocument();
   const element = {
     ownerDocument: document,
@@ -128,6 +129,7 @@ function browserFixture(groundHeight = (_x: number, _z: number) => 0) {
   const controller = new FirstPersonController(
     camera, element as unknown as HTMLElement, [], groundHeight,
     (locked) => lockChanges.push(locked), (message) => errors.push(message),
+    world,
   );
   return { document, element, camera, controller, lockChanges, errors };
 }
@@ -300,5 +302,62 @@ test('a pending pointer lock cannot reacquire control after cancellation', async
   await new Promise((resolve) => setImmediate(resolve));
   assert.equal(controller.isLocked, false);
   assert.deepEqual(lockChanges, []);
+  controller.dispose();
+});
+
+test('rotated box overlap follows Three.js Y rotation at several door angles', () => {
+  assert.equal(typeof movement.overlapsCollider, 'function', 'shared door overlap must be exported');
+  const door = { type: 'obb' as const, x: 0, z: 0, halfX: 1, halfZ: 0.04, rotation: 0 };
+  assert.equal(movement.overlapsCollider({ x: 0.9, z: 0 }, door, 0.28), true);
+  assert.equal(movement.overlapsCollider({ x: 0, z: 0.6 }, door, 0.28), false);
+  door.rotation = Math.PI / 2;
+  assert.equal(movement.overlapsCollider({ x: 0, z: -0.9 }, door, 0.28), true);
+  assert.equal(movement.overlapsCollider({ x: 0.6, z: 0 }, door, 0.28), false);
+  door.rotation = Math.PI / 4;
+  assert.equal(movement.overlapsCollider({ x: 0.6, z: -0.6 }, door, 0.28), true);
+  assert.equal(movement.overlapsCollider({ x: 0.6, z: 0.6 }, door, 0.28), false);
+  door.rotation = -Math.PI / 4;
+  assert.equal(movement.overlapsCollider({ x: 0.6, z: 0.6 }, door, 0.28), true);
+});
+
+test('legacy movement cannot tunnel through a fast approached rotated thin door', () => {
+  const door: Collider = { type: 'obb', x: 0, z: 0, halfX: 1, halfZ: 0.025, rotation: Math.PI / 4 };
+  const result = moveWithCollisions({ x: -4, z: 0 }, { x: 8, z: 0 }, [door]);
+  assert.ok(result.x < -0.4 && result.x > -0.44);
+});
+
+test('controller stores feet independently from camera easing while ascending a ramp', () => {
+  const world: MotionWorld = {
+    colliders: [], groundHeight: () => 0,
+    surfaces: [{ id: 'stairs', minX: 17, maxX: 19, minZ: 26, maxZ: 32, height: 0,
+      ramp: { axis: 'z', start: 32, end: 26, rise: 3.7 } }],
+  };
+  const { camera, controller, document } = browserFixture(() => 0, world);
+  controller.lock();
+  camera.rotation.set(0, 0, 0);
+  keyEvent(document, 'keydown', 'KeyW');
+  for (let index = 0; index < 30; index++) controller.update(0.05);
+  close(controller.feetPosition.z, 28.1);
+  close(controller.feetPosition.y, 2.405);
+  assert.ok(camera.position.y < controller.feetPosition.y + 1.68);
+  keyEvent(document, 'keyup', 'KeyW');
+  for (let index = 0; index < 30; index++) controller.update(0.05);
+  close(controller.feetPosition.y, 2.405);
+  close(camera.position.y, 4.085);
+  controller.dispose();
+});
+
+test('controller reset clears held input and restores exterior feet below an upper surface', () => {
+  const world: MotionWorld = {
+    colliders: [], groundHeight: () => 0,
+    surfaces: [{ id: 'upper', minX: 0, maxX: 30, minZ: 0, maxZ: 40, height: 3.7 }],
+  };
+  const { camera, controller, document } = browserFixture(() => 0, world);
+  controller.lock();
+  keyEvent(document, 'keydown', 'KeyW');
+  controller.reset();
+  controller.update(0.05);
+  assert.deepEqual(controller.feetPosition, { x: 18, y: 0, z: 32 });
+  close(camera.position.y, 1.68);
   controller.dispose();
 });

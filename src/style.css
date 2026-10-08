@@ -5,3 +5,4 @@
 
 /* 暂停蒙层保留工具栏的点击通道。 */
 .pause{pointer-events:none}.pause-card{pointer-events:auto}
+.interaction{position:absolute;left:50%;top:58%;transform:translate(-50%,-50%);padding:12px 22px;background:#263d3beb;border:1px solid #a8af9270;color:#efe7cc;letter-spacing:1px;max-width:80vw;text-align:center;font-size:14px;box-shadow:0 5px 22px #10232235}.interaction[hidden]{display:none}

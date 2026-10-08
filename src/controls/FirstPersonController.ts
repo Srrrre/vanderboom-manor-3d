@@ -1,7 +1,8 @@
 import type { PerspectiveCamera } from 'three';
-import type { Collider } from '../world/types.ts';
+import type { Collider, MotionWorld } from '../world/types.ts';
 import { PLAYER } from '../config.ts';
 import { movementDelta, moveWithCollisions } from './movement.ts';
+import { moveOnSurfaces } from './surfaces.ts';
 
 const movementKeys = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ShiftLeft', 'ShiftRight']);
 const pitchLimit = Math.PI / 2 - 0.01;
@@ -11,6 +12,9 @@ export class FirstPersonController {
   private readonly element: HTMLElement;
   private readonly colliders: Collider[];
   private readonly groundHeight: (x: number, z: number) => number;
+  private readonly world?: MotionWorld;
+  // 逻辑脚底独立于镜头缓动，连续爬楼不能从尚未追上的镜头反推楼层。
+  private feetY = 0;
   private readonly onLockChange: (locked: boolean) => void;
   private readonly onError: (message: string) => void;
   private readonly document: Document;
@@ -27,11 +31,13 @@ export class FirstPersonController {
     groundHeight: (x: number, z: number) => number,
     onLockChange: (locked: boolean) => void,
     onError: (message: string) => void,
+    world?: MotionWorld,
   ) {
     this.camera = camera;
     this.element = element;
     this.colliders = colliders;
     this.groundHeight = groundHeight;
+    this.world = world;
     this.onLockChange = onLockChange;
     this.onError = onError;
     this.document = element.ownerDocument;
@@ -50,6 +56,11 @@ export class FirstPersonController {
     return !this.disposed && this.document.pointerLockElement === this.element;
   }
 
+  /** 门系统使用真实脚底检查防夹，返回副本以避免外部修改移动状态。 */
+  get feetPosition(): { x: number; y: number; z: number } {
+    return { x: this.camera.position.x, y: this.feetY, z: this.camera.position.z };
+  }
+
   update(dt: number): void {
     if (!this.isLocked || this.document.hidden) return;
     const frameTime = Math.min(0.05, Math.max(0, Number.isFinite(dt) ? dt : 0));
@@ -58,20 +69,24 @@ export class FirstPersonController {
       right: Number(this.keys.has('KeyD')) - Number(this.keys.has('KeyA')),
       sprint: this.keys.has('ShiftLeft') || this.keys.has('ShiftRight'),
     }, this.camera.rotation.y, frameTime);
-    const position = moveWithCollisions(this.camera.position, delta, this.colliders);
+    const position: { x: number; y?: number; z: number } = this.world
+      ? moveOnSurfaces(this.feetPosition, delta, this.world)
+      : moveWithCollisions(this.camera.position, delta, this.colliders);
     this.camera.position.x = position.x;
     this.camera.position.z = position.z;
-    const ground = this.groundHeight(position.x, position.z);
-    const targetEye = ground + PLAYER.eyeHeight;
+    this.feetY = position.y ?? this.groundHeight(position.x, position.z);
+    const targetEye = this.feetY + PLAYER.eyeHeight;
     // 平滑跨越低台阶，并始终让镜头留在地表上方。
     const nextEye = this.camera.position.y + (targetEye - this.camera.position.y) * (1 - Math.exp(-12 * frameTime));
-    this.camera.position.y = Math.max(ground + 0.4, nextEye);
+    // 下楼时缓动镜头同样留在角色碰撞净空之内，避免穿过低顶。
+    this.camera.position.y = Math.max(this.feetY + 0.4, this.world ? Math.min(this.feetY + 1.78, nextEye) : nextEye);
   }
 
   reset(): void {
     this.keys.clear();
     const [x, z] = PLAYER.spawn;
-    this.camera.position.set(x, this.groundHeight(x, z) + PLAYER.eyeHeight, z);
+    this.feetY = this.groundHeight(x, z);
+    this.camera.position.set(x, this.feetY + PLAYER.eyeHeight, z);
     this.camera.lookAt(0, 5, 0);
   }
 
