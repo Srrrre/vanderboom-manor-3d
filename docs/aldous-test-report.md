@@ -49,4 +49,8 @@ Playwright驱动本机Edge的真实WebGL页面，以鼠标锁定、WASD/Shift/E�
 
 ## 部署记录
 
-本地验收后推送现有main分支，并在GitHub Actions成功后对在线页面重新走完整路线；实际结果随后记录于此。
+- 功能提交：`9b96530fcb758ca58d359b13dbeacbad214af9c2`，已正常推送现有main，本地与远程SHA一致，无强制推送。
+- [Actions 37790619204](https://github.com/Srrrre/vanderboom-manor-3d/actions/runs/37790619204)：安装、测试、构建与Pages部署均success，部署于2026-10-08 14:13:32 UTC完成。
+- 实际访问 [在线页面](https://srrrre.github.io/vanderboom-manor-3d/) 并以Edge重新完成整个路线：正门关闭阻挡再打开、厨房、餐厅、扩大后的门厅、主厅、Aldous两段楼梯及房间、返回主厅、威廉客房、下楼出门、暂停/继续、轻量画质、窗口缩放与重置全部通过。
+- 线上Aldous中间平台脚底2.30m、房间4.15m、稳定眼高5.83m；下楼回主厅0.45m、回前院0m。控制台错误0、警告0。
+- 待提交清单与常见密钥特征已检查，仅有源码、测试、文档和页面文本；无原作素材、依赖目录、构建缓存或密钥。
