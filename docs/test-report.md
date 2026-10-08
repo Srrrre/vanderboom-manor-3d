@@ -41,3 +41,12 @@
 Three.js 主分包约 548 KB（gzip 137 KB），会出现 Vite 的 500 KB 体积提醒；已独立分包，无额外大型运行依赖。树冠、芦苇和细碎岸石不设碰撞；大山体使用保守外接圆，部分山脚会提前阻挡。没有触屏控制、跳跃、室内、动态水面或油画后处理。
 
 截图只能支持轮廓级重建；绝对尺度与侧背面仍是推测，不能宣称完成精确测绘式还原。
+
+## GitHub 与线上验收
+
+- 公开仓库：[Srrrre/vanderboom-manor-3d](https://github.com/Srrrre/vanderboom-manor-3d)，默认分支 `main`。
+- 首次提交：`9ac7fe12f004b1e3ad63f73f2f00f40a28b27464`，提交说明为用户指定的 `feat: initial 3D manor scene and first-person exploration`；本地与远程 SHA 一致。
+- [首次 Actions 构建与部署](https://github.com/Srrrre/vanderboom-manor-3d/actions/runs/37773513396)均成功，Linux runner 上 `npm ci`、31 项测试和生产构建通过。
+- [GitHub Pages 在线页面](https://srrrre.github.io/vanderboom-manor-3d/)已实际用 Edge 浏览器测试：场景和资源加载正常、点击进入鼠标锁定、WASD/Shift 位移、鼠标转向、Esc 暂停、重置、墙体阻挡、轻量画质与窗口缩放均通过；控制台错误 0、warning 0。
+- Pages 已启用 GitHub Actions 发布和 HTTPS，不需要用户再修改设置。后续推送 `main` 自动重新部署。
+- 提交清单经检查不包含游戏截图、音乐、密钥、`.env`、`node_modules` 或构建缓存。
